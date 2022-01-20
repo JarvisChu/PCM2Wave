@@ -18,7 +18,7 @@ struct SubChunkFormat
 	uint32_t byte_rate;       // 传输速率(Byte Rate)，每秒数据字节数，SampleRate * Channels * BitsPerSample / 8
 	uint16_t block_align;     // 每个采样所需的字节数BlockAlign，BitsPerSample*Channels / 8
 	uint16_t bits_per_sample; // 单个采样位深(Bits Per Sample)，可选8、16或32
-	uint16_t ex_size;         // 扩展块的大小，附加块的大小
+	// uint16_t ex_size;         // 扩展块的大小，附加块的大小，非PCM编码需要
 };
 
 // data 子块
@@ -54,14 +54,14 @@ void write_wave_header(FILE* fp, int pcm_file_size, uint32_t sample_rate, uint16
 	WaveHeader header;
 	header.fourcc = MAKE_FOURCC('R', 'I', 'F', 'F');
 	fwrite(&header.fourcc, sizeof(char), sizeof(header.fourcc), fp);
-	header.chunk_size = 38 + pcm_file_size; // 38 = 46 (header size) - 8(sizeof chunk+ sizeof chunk_size)  
+	header.chunk_size = 36 + pcm_file_size; // 36 = 44 (header size) - 8(sizeof chunk+ sizeof chunk_size)  
 	fwrite(&header.chunk_size, sizeof(char), sizeof(header.chunk_size), fp);
 	header.form_type = MAKE_FOURCC('W', 'A', 'V', 'E');
 	fwrite(&header.form_type, sizeof(char), sizeof(header.form_type), fp);
 
 	header.subchunk_format.chunk = MAKE_FOURCC('f', 'm', 't', ' ');
 	fwrite(&header.subchunk_format.chunk, sizeof(char), sizeof(header.subchunk_format.chunk), fp);
-	header.subchunk_format.subchunk_size = 18;
+	header.subchunk_format.subchunk_size = 16; // PCM编码不需要ex_size
 	fwrite(&header.subchunk_format.subchunk_size, sizeof(char), sizeof(header.subchunk_format.subchunk_size), fp);
 	header.subchunk_format.audio_format = 1;
 	fwrite(&header.subchunk_format.audio_format, sizeof(char), sizeof(header.subchunk_format.audio_format), fp);
@@ -75,8 +75,8 @@ void write_wave_header(FILE* fp, int pcm_file_size, uint32_t sample_rate, uint16
 	fwrite(&header.subchunk_format.block_align, sizeof(char), sizeof(header.subchunk_format.block_align), fp);
 	header.subchunk_format.bits_per_sample = sample_bits;
 	fwrite(&header.subchunk_format.bits_per_sample, sizeof(char), sizeof(header.subchunk_format.bits_per_sample), fp);
-	header.subchunk_format.ex_size = 0;
-	fwrite(&header.subchunk_format.ex_size, sizeof(char), sizeof(header.subchunk_format.ex_size), fp);
+	// header.subchunk_format.ex_size = 0;
+	// fwrite(&header.subchunk_format.ex_size, sizeof(char), sizeof(header.subchunk_format.ex_size), fp);
 
 	header.subchunk_data.chunk = MAKE_FOURCC('d', 'a', 't', 'a');
 	fwrite(&header.subchunk_data.chunk, sizeof(char), sizeof(header.subchunk_data.chunk), fp);
